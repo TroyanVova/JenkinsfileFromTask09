@@ -17,7 +17,7 @@ pipeline {
             }
         }
         stage('Deploy') {
-			agent { label 'master' } } // обов'язково на master
+			agent { label 'master' } // обов'язково на master
 			steps {
 				// На master розпакуємо файл
 				unstash 'apache-log'
