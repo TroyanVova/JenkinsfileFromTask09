@@ -32,24 +32,18 @@ pipeline {
         }
 
         stage('Deploy') {
-            agent { label 'master' }
-            steps {
-                script {
-                    // Копіюємо останній артефакт з Build
-                    copyArtifacts(projectName: env.JOB_NAME, selector: lastSuccessful())
+			agent { label 'master' }
+			steps {
+				script {
+					// Беремо останній архівований лог з workspace VM2Agent
+					sh """
+						latest_log=\$(ls -t ${WORKSPACE}/access_*.log | head -n1)
+						mv \$latest_log /var/lib/jenkins/logs/
+					"""
+					echo "Deployed latest log file to master node"
+				}
+			}
+		}
 
-                    // Отримуємо останній архівований файл
-                    def logFiles = sh(script: "ls -t access_*.log", returnStdout: true).trim().split("\n")
-                    if (logFiles.length == 0) {
-                        error "No archived log files found!"
-                    }
-
-                    def latestLog = logFiles[0]
-                    def deployPath = "/var/lib/jenkins/logs/${latestLog}"
-                    sh "mv ${latestLog} ${deployPath}"
-                    echo "Deployed log file to master: ${deployPath}"
-                }
-            }
-        }
     }
 }
