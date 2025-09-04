@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'firstAgent' } // агент на VM2
+    agent { label 'VM2Agent' } // агент на VM2
 
     stages {
         stage('Build') {
