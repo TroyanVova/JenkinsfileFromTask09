@@ -1,0 +1,55 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Build') {
+            agent { label 'VM2Agent' }
+            steps {
+                script {
+                    def logFile = '/var/log/apache2/access.log'
+                    if (!fileExists(logFile)) {
+                        error "File ${logFile} does not exist!"
+                    }
+
+                    // Створюємо копію файлу з timestamp
+                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                    def destFile = "${WORKSPACE}/access_${timestamp}.log"
+                    sh "cp ${logFile} ${destFile}"
+                    
+                    // Архівуємо копію
+                    archiveArtifacts artifacts: "access_${timestamp}.log", fingerprint: true
+                    echo "Archived ${destFile} successfully."
+                }
+            }
+        }
+
+        stage('Test') {
+            agent { label 'VM2Agent' }
+            steps {
+                echo "Running tests..."
+                // Місце для реальних тестів
+            }
+        }
+
+        stage('Deploy') {
+            agent { label 'master' }
+            steps {
+                script {
+                    // Копіюємо останній артефакт з Build
+                    copyArtifacts(projectName: env.JOB_NAME, selector: lastSuccessful())
+
+                    // Отримуємо останній архівований файл
+                    def logFiles = sh(script: "ls -t access_*.log", returnStdout: true).trim().split("\n")
+                    if (logFiles.length == 0) {
+                        error "No archived log files found!"
+                    }
+
+                    def latestLog = logFiles[0]
+                    def deployPath = "/var/lib/jenkins/logs/${latestLog}"
+                    sh "mv ${latestLog} ${deployPath}"
+                    echo "Deployed log file to master: ${deployPath}"
+                }
+            }
+        }
+    }
+}
