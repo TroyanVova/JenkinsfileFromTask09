@@ -4,8 +4,11 @@ pipeline {
     stages {
         stage('Build') {
 			steps {
-				// На агенті стешимо файл
-				stash name: 'apache-log', includes: '/var/log/apache2/access.log'
+				// Копіюємо файл у workspace
+				sh 'cp /var/log/apache2/access.log ${WORKSPACE}/access.log'
+
+				// Ставимо stash
+				stash name: 'apache-log', includes: 'access.log'
 			}
 		}
         stage('Test') {
