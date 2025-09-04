@@ -3,19 +3,23 @@ pipeline {
 
     stages {
         stage('Build') {
-            steps {
-              sh 'scp -P 22 /var/log/apache2/access.log jenkins@192.168.100.5:/var/lib/jenkins/logs/vm2ApacheEroor.log'
-            }
-        }
+			steps {
+				// На агенті стешимо файл
+				stash name: 'apache-log', includes: '/var/log/apache2/access.log'
+			}
+		}
         stage('Test') {
             steps {
               sh 'echo "Test stage"'
             }
         }
         stage('Deploy') {
-            steps {
-                sh 'echo "Deploy stage"'
-            }
-        }
+			agent { label 'master' } // обов'язково на master
+			steps {
+				// На master розпакуємо файл
+				unstash 'apache-log'
+				sh 'mv access.log /var/lib/jenkins/logs/vm2ApacheEroor.log'
+			}
+		}
     }
 }
