@@ -4,9 +4,9 @@ pipeline {
     stages {
         stage('Build') {
 			steps {
-				// Копіюємо файл у workspace
-				sh 'cp /var/log/apache2/access.log ${WORKSPACE}/access.log'
-
+				sh '''
+                  grep ' [45][0-9][0-9] ' /var/log/apache2/access.log > ${WORKSPACE}/error_access.log || true
+                '''
 				// Ставимо stash
 				stash name: 'apache-log', includes: 'access.log'
 			}
@@ -17,7 +17,7 @@ pipeline {
             }
         }
         stage('Deploy') {
-			agent { label 'master' } // обов'язково на master
+			agent { label 'master' } 
 			steps {
 				// На master розпакуємо файл
 				unstash 'apache-log'
